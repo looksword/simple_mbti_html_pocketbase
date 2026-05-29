@@ -1,0 +1,2 @@
+# simple_mbti_html_pocketbase
+PocketBase的静态网页
