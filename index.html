@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MBTI 性格测试</title>
+  <style>
+    body { font-family: system-ui; max-width: 600px; margin: auto; padding: 20px; background-color: #f3f4f6; color: #1f2937; }
+    
+    /* 顶部导航与快捷按钮 */
+    .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    h1 { margin: 0; font-size: 24px; }
+    .nav-btn { padding: 8px 16px; font-size: 14px; background: #ffffff; color: #4f46e5; border: 1px solid #4f46e5; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.2s; }
+    .nav-btn:hover { background: #4f46e5; color: #fff; }
+
+    /* 进度条样式 */
+    .progress-container { width: 100%; background: #e5e7eb; height: 8px; border-radius: 4px; margin-bottom: 24px; overflow: hidden; }
+    .progress-bar { height: 100%; width: 0%; background: #4f46e5; transition: width 0.3s ease; }
+    .progress-text { font-size: 14px; color: #6b7280; text-align: right; margin-top: -16px; margin-bottom: 20px; }
+
+    /* 题目外壳与动画特效 */
+    #questions { position: relative; min-height: 280px; overflow: hidden; }
+    .question { 
+      padding: 24px; background: #fff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      position: absolute; width: 100%; box-sizing: border-box;
+      opacity: 0; transform: translateX(50px); pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    /* 激活状态的题目 */
+    .question.active { opacity: 1; transform: translateX(0); pointer-events: auto; position: relative; }
+    
+    .question p { font-size: 18px; font-weight: bold; margin-top: 0; line-height: 1.5; }
+    
+    /* 选项样式优化 */
+    .options label { display: block; margin: 12px 0; padding: 12px 16px; border-radius: 10px; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s; background: #fff; }
+    .options label:hover { background: #f0fdf4; border-color: #86efac; }
+    .options input[type="radio"] { margin-right: 10px; transform: scale(1.1); }
+    /* 选中后的样式高亮 */
+    .options label.selected { background: #eef2ff; border-color: #4f46e5; font-weight: 500; }
+
+    /* 底部控制按钮 */
+    .control-btns { display: flex; gap: 12px; margin-top: 20px; }
+    .btn-secondary { padding: 12px 24px; font-size: 16px; background: #e5e7eb; color: #4b5563; border: none; border-radius: 8px; cursor: pointer; flex: 1; transition: background 0.2s; }
+    .btn-secondary:hover { background: #d1d5db; }
+    .btn-primary { padding: 12px 24px; font-size: 16px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; cursor: pointer; flex: 2; transition: background 0.2s; }
+    .btn-primary:hover { background: #4338ca; }
+    .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+
+    /* 昵称和提交区（初始隐藏） */
+    #submitArea { background: #fff; padding: 24px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-top: 20px; display: none; }
+    input[type="text"] { padding: 12px; width: 100%; margin: 12px 0 20px 0; box-sizing: border-box; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; }
+    
+    #result { margin-top: 30px; padding: 24px; background: #f0fdf4; border-radius: 16px; border: 1px solid #bbf7d0; display: none; text-align: center; }
+    #result h2 { color: #166534; }
+  </style>
+</head>
+<body>
+
+  <div class="header-container">
+    <h1>🧠 MBTI 深度测试</h1>
+    <a href="/query.html" class="nav-btn">🔍 查询历史结果</a>
+  </div>
+  <p style="color: #6b7280; margin-top: 0;">本测试共 32 题，请根据你的真实偏好选择。</p>
+
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  <div class="progress-text" id="progressText">第 1 / 32 题</div>
+
+  <form id="testForm">
+    <div id="questions"></div>
+
+    <div class="control-btns" id="controlBtns">
+      <button type="button" class="btn-secondary" id="prevBtn" onclick="changeQuestion(-1)" disabled>上一题</button>
+      <button type="button" class="btn-primary" id="nextBtn" onclick="changeQuestion(1)">下一题</button>
+    </div>
+
+    <div id="submitArea">
+      <label style="font-weight: bold; font-size: 16px;">填写你的昵称（用于保存和查询结果）：</label>
+      <input type="text" id="nameInput" placeholder="输入昵称">
+      <button type="submit" class="btn-primary" style="width: 100%;">提交测试结果</button>
+    </div>
+  </form>
+
+  <div id="result">
+    <h2>你的 MBTI 类型：<span id="mbtiType"></span></h2>
+    <p>结果已保存，可随时前往 <a href="/query.html" style="color: #4f46e5; font-weight: bold;">查询页面</a> 查看。</p>
+  </div>
+
+  <script>
+    // ---------- 32 道题目库 ----------
+    const questions = [
+      // E/I 维度 (8题)
+      { text: "参加聚会时，你通常", a:"与很多人交谈，感到精力充沛", b:"更喜欢和少数熟人深入交流", dim:"EI" },
+      { text: "思考重要问题时，你喜欢", a:"找人讨论，边说边理清思路", b:"独自安静思考", dim:"EI" },
+      { text: "在社交场合中，你更偏向", a:"主动结识新朋友", b:"等待别人来与你交流", dim:"EI" },
+      { text: "经过一整天的忙碌，你更愿意", a:"与朋友一起放松", b:"独自享受安静时光", dim:"EI" },
+      { text: "当你遇到压力时，通常", a:"找人倾诉，寻求支持", b:"独自消化，处理情绪", dim:"EI" },
+      { text: "你更喜欢的工作环境是", a:"开放、互动频繁的", b:"安静、独立完成任务的", dim:"EI" },
+      { text: "在团队中，你通常", a:"主动表达观点，引导讨论", b:"仔细倾听，深思后发言", dim:"EI" },
+      { text: "形容你自己，更贴近的是", a:"对外部世界的人和事感兴趣", b:"对内心的想法和感受感兴趣", dim:"EI" },
+
+      // S/N 维度 (8题)
+      { text: "你更关注", a:"具体的细节和事实", b:"整体的模式和可能性", dim:"SN" },
+      { text: "学习新事物时，你更喜欢", a:"按部就班，注重实际操作", b:"探索理论，理解背后的概念", dim:"SN" },
+      { text: "描述一样东西，你更倾向于", a:"描述它实际的样子和功能", b:"描述它给你的联想和意义", dim:"SN" },
+      { text: "做决定时，你更看重", a:"以往的经验和现实条件", b:"未来的可能性和灵感", dim:"SN" },
+      { text: "读一本小说，你会更关注", a:"故事情节和具体细节", b:"作品的主题和象征意义", dim:"SN" },
+      { text: "你更容易被哪种创新吸引", a:"改进现有产品使其更实用", b:"完全颠覆性的新概念", dim:"SN" },
+      { text: "旅行时，你更享受", a:"参观热门景点，体验当地生活", b:"探索未知小巷，感受独特氛围", dim:"SN" },
+      { text: "你更信任", a:"自己的亲身经历和观察", b:"自己的直觉和预感", dim:"SN" },
+
+      // T/F 维度 (8题)
+      { text: "做重要决定时，你更重视", a:"逻辑分析和客观标准", b:"个人价值观和人际关系", dim:"TF" },
+      { text: "朋友向你倾诉烦恼，你倾向于", a:"给出理性建议和解决方案", b:"给予情感共鸣和支持", dim:"TF" },
+      { text: "你认为公正和同情，哪个更重要？", a:"公正优先", b:"同情优先", dim:"TF" },
+      { text: "被批评时，你首先会想", a:"对方的批评是否有道理", b:"对方是否对你有成见", dim:"TF" },
+      { text: "在团队中产生分歧时，你更看重", a:"按照规则和效率解决", b:"照顾大家的情绪，维护和谐", dim:"TF" },
+      { text: "你认为一个好领导应该是", a:"理性、果断、一视同仁", b:"善解人意、善于激励", dim:"TF" },
+      { text: "你更欣赏哪种品质", a:"头脑冷静，善于分析", b:"温柔体贴，善于关怀", dim:"TF" },
+      { text: "写一封邮件，你更注重", a:"措辞准确、逻辑清晰", b:"语气友善、感受周到", dim:"TF" },
+
+      // J/P 维度 (8题)
+      { text: "在日常生活中，你喜欢", a:"制定计划，并尽量按计划行事", b:"灵活应变，享受即兴安排", dim:"JP" },
+      { text: "面对截止日期，你通常", a:"尽早开始，稳步推进", b:"在最后关头集中冲刺", dim:"JP" },
+      { text: "你的桌面或工作空间更偏向", a:"整齐、有条理", b:"随性、看似凌乱但你知道东西在哪", dim:"JP" },
+      { text: "外出旅行，你更倾向于", a:"提前规划好行程和住宿", b:"只定个大概方向，边走边看", dim:"JP" },
+      { text: "做完一个决定后，你通常会", a:"感到轻松，事情敲定了", b:"仍然保持开放，或许还有其他选择", dim:"JP" },
+      { text: "你更喜欢哪种工作方式", a:"有明确的规则和步骤", b:"自由发挥，探索多种可能", dim:"JP" },
+      { text: "购物时，你更偏向", a:"直奔目标商品，买完就走", b:"喜欢逛，看看有什么新发现", dim:"JP" },
+      { text: "你如何看待日程安排", a:"它是保证效率的工具", b:"它常常限制了我的自由", dim:"JP" }
+    ];
+
+    let currentIdx = 0; // 当前题目索引
+
+    // 渲染题目
+    const qDiv = document.getElementById('questions');
+    questions.forEach((q, idx) => {
+      qDiv.innerHTML += `
+        <div class="question ${idx === 0 ? 'active' : ''}" id="qBlock${idx}">
+          <p>${idx + 1}. ${q.text}</p>
+          <div class="options">
+            <label onclick="selectOption(this, ${idx})"><input type="radio" name="q${idx}" value="2" required> 很像A：${q.a}</label>
+            <label onclick="selectOption(this, ${idx})"><input type="radio" name="q${idx}" value="1"> 比较像A</label>
+            <label onclick="selectOption(this, ${idx})"><input type="radio" name="q${idx}" value="0"> 中立</label>
+            <label onclick="selectOption(this, ${idx})"><input type="radio" name="q${idx}" value="-1"> 比较像B</label>
+            <label onclick="selectOption(this, ${idx})"><input type="radio" name="q${idx}" value="-2"> 很像B：${q.b}</label>
+          </div>
+        </div>
+      `;
+    });
+
+    // 选项点击高亮逻辑
+    function selectOption(labelEl, idx) {
+      // 防止 label 标签双击事件穿透
+      if (window.event && window.event.target.tagName === 'INPUT') return;
+
+      // 清除当前题目的其他高亮
+      const labels = labelEl.parentElement.querySelectorAll('label');
+      labels.forEach(l => l.classList.remove('selected'));
+      // 为当前点击的高亮
+      labelEl.classList.add('selected');
+
+      // 手动勾选对应的单选框（防止阻止事件后原生不勾选）
+      const radio = labelEl.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+
+      // 如果是最后一题
+      if (idx === questions.length - 1) {
+        setTimeout(() => {
+          document.getElementById('controlBtns').style.display = 'none';
+          document.getElementById('submitArea').style.display = 'block';
+          
+          // 隐藏掉最后一题的题目内容，腾出空间展示提交区
+          document.getElementById(`qBlock${idx}`).classList.remove('active');
+          
+          updateProgress(questions.length); // 进度条拉满
+        }, 300);
+        return; 
+      }
+      
+      // 如果不是最后一题，300ms 后自动切到下一题
+      setTimeout(() => { 
+        if (currentIdx === idx && currentIdx < questions.length - 1) {
+          changeQuestion(1); 
+        } 
+      }, 300);
+    }
+
+    // 切换题目核心逻辑
+    function changeQuestion(step) {
+      // 验证当前题目是否已做（只有往后走时需要验证）
+      if (step === 1) {
+        const checked = document.querySelector(`input[name="q${currentIdx}"]:checked`);
+        if (!checked) {
+          alert('请先选择一个选项再进行下一题');
+          return;
+        }
+      }
+
+      // 隐藏当前题
+      document.getElementById(`qBlock${currentIdx}`).classList.remove('active');
+
+      // 计算新题目的索引
+      currentIdx += step;
+
+      // 显示新一题
+      document.getElementById(`qBlock${currentIdx}`).classList.add('active');
+
+      // 更新控制按钮状态
+      document.getElementById('prevBtn').disabled = (currentIdx === 0);
+      
+      // 更新进度条
+      updateProgress(currentIdx);
+    }
+
+    // 更新进度条和文本提示
+    function updateProgress(index) {
+      const percent = (index / questions.length) * 100;
+      document.getElementById('progressBar').style.width = `${percent}%`;
+      if (index < questions.length) {
+        document.getElementById('progressText').textContent = `第 ${index + 1} / ${questions.length} 题`;
+      } else {
+        document.getElementById('progressText').textContent = `题目已全部完成！`;
+      }
+    }
+
+    // 初始化进度条
+    updateProgress(0);
+
+    // 提交逻辑
+    document.getElementById('testForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('nameInput').value.trim();
+      if (!name) return alert('请输入昵称');
+
+      // 收集答案并计分
+      const scores = { EI: 0, SN: 0, TF: 0, JP: 0 };
+      const answers = [];
+      questions.forEach((q, idx) => {
+        const selected = document.querySelector(`input[name="q${idx}"]:checked`);
+        const val = selected ? parseInt(selected.value) : 0;
+        answers.push(val);
+        scores[q.dim] += val;
+      });
+
+      // 确定类型
+      let type = '';
+      type += scores.EI >= 0 ? 'E' : 'I';
+      type += scores.SN >= 0 ? 'S' : 'N';
+      type += scores.TF >= 0 ? 'T' : 'F';
+      type += scores.JP >= 0 ? 'J' : 'P';
+
+      // 保存到 PocketBase
+      try {
+        const res = await fetch('http://127.0.0.1:8090/api/collections/results/records', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, mbti_type: type, answers, scores })
+        });
+        if (!res.ok) throw new Error('保存失败');
+        
+        document.getElementById('mbtiType').textContent = type;
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('testForm').style.display = 'none';
+        document.querySelector('.progress-container').style.display = 'none';
+        document.getElementById('progressText').style.display = 'none';
+      } catch (err) {
+        alert('提交失败，请检查网络连接');
+      }
+    });
+  </script>
+</body>
+</html>
