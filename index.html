@@ -3,272 +3,565 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MBTI 性格测试</title>
+  <title>MBTI 性格深度测试</title>
   <style>
-    body { font-family: system-ui; max-width: 600px; margin: auto; padding: 20px; background-color: #f3f4f6; color: #1f2937; }
-    
-    /* 顶部导航与快捷按钮 */
-    .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    h1 { margin: 0; font-size: 24px; }
-    .nav-btn { padding: 8px 16px; font-size: 14px; background: #ffffff; color: #4f46e5; border: 1px solid #4f46e5; border-radius: 8px; text-decoration: none; font-weight: bold; transition: all 0.2s; }
-    .nav-btn:hover { background: #4f46e5; color: #fff; }
-
-    /* 进度条样式 */
-    .progress-container { width: 100%; background: #e5e7eb; height: 8px; border-radius: 4px; margin-bottom: 24px; overflow: hidden; }
-    .progress-bar { height: 100%; width: 0%; background: #4f46e5; transition: width 0.3s ease; }
-    .progress-text { font-size: 14px; color: #6b7280; text-align: right; margin-top: -16px; margin-bottom: 20px; }
-
-    /* 题目外壳与动画特效 */
-    #questions { position: relative; min-height: 280px; overflow: hidden; }
-    .question { 
-      padding: 24px; background: #fff; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-      position: absolute; width: 100%; box-sizing: border-box;
-      opacity: 0; transform: translateX(50px); pointer-events: none;
-      transition: opacity 0.4s ease, transform 0.4s ease;
+    :root {
+      --bg: #f8f9fc;
+      --card: #ffffff;
+      --accent: #6366f1;
+      --accent-light: #eef2ff;
+      --accent-dark: #4f46e5;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --green-bg: #f0fdf4;
+      --green-border: #bbf7d0;
+      --green-text: #166534;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.06), 0 4px 10px rgba(0,0,0,0.03);
+      --radius: 14px;
+      --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    /* 激活状态的题目 */
-    .question.active { opacity: 1; transform: translateX(0); pointer-events: auto; position: relative; }
-    
-    .question p { font-size: 18px; font-weight: bold; margin-top: 0; line-height: 1.5; }
-    
-    /* 选项样式优化 */
-    .options label { display: block; margin: 12px 0; padding: 12px 16px; border-radius: 10px; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s; background: #fff; }
-    .options label:hover { background: #f0fdf4; border-color: #86efac; }
-    .options input[type="radio"] { margin-right: 10px; transform: scale(1.1); }
-    /* 选中后的样式高亮 */
-    .options label.selected { background: #eef2ff; border-color: #4f46e5; font-weight: 500; }
 
-    /* 底部控制按钮 */
-    .control-btns { display: flex; gap: 12px; margin-top: 20px; }
-    .btn-secondary { padding: 12px 24px; font-size: 16px; background: #e5e7eb; color: #4b5563; border: none; border-radius: 8px; cursor: pointer; flex: 1; transition: background 0.2s; }
-    .btn-secondary:hover { background: #d1d5db; }
-    .btn-primary { padding: 12px 24px; font-size: 16px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; cursor: pointer; flex: 2; transition: background 0.2s; }
-    .btn-primary:hover { background: #4338ca; }
-    .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+    * { box-sizing: border-box; }
 
-    /* 昵称和提交区（初始隐藏） */
-    #submitArea { background: #fff; padding: 24px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-top: 20px; display: none; }
-    input[type="text"] { padding: 12px; width: 100%; margin: 12px 0 20px 0; box-sizing: border-box; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; }
-    
-    #result { margin-top: 30px; padding: 24px; background: #f0fdf4; border-radius: 16px; border: 1px solid #bbf7d0; display: none; text-align: center; }
-    #result h2 { color: #166534; }
+    body {
+      margin: 0; padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex; justify-content: center; align-items: flex-start;
+      padding: 24px 16px 80px;
+    }
+
+    .app {
+      width: 100%; max-width: 640px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    /* ── 头部 ── */
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 4px;
+    }
+    .header h1 {
+      font-size: 26px; font-weight: 800; margin: 0;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header-subtitle {
+      font-size: 14px; color: var(--text-muted); margin: 2px 0 0 4px;
+    }
+    .query-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 18px; font-size: 14px; font-weight: 600;
+      background: var(--card); color: var(--accent);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      text-decoration: none; white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .query-link:hover { border-color: var(--accent); background: var(--accent-light); }
+
+    /* ── 进度 ── */
+    .progress-wrap { display: flex; flex-direction: column; gap: 8px; }
+    .progress-info { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); }
+    .progress-track {
+      height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      border-radius: 3px;
+      transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .dimension-tags {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .dim-tag {
+      font-size: 12px; font-weight: 700; padding: 3px 10px;
+      border-radius: 99px;
+      background: var(--accent-light); color: var(--accent-dark);
+      opacity: 0.5; transition: opacity 0.3s;
+    }
+    .dim-tag.current { opacity: 1; }
+    .dim-tag.done { opacity: 0.85; background: #d1fae5; color: #065f46; }
+
+    /* ── 题目卡片 ── */
+    .card-stage {
+      position: relative; min-height: 320px;
+    }
+    .question-card {
+      position: absolute; width: 100%;
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); border: 1px solid var(--border);
+      padding: 28px;
+      opacity: 0; transform: translateX(40px); pointer-events: none;
+      transition: opacity var(--transition), transform var(--transition);
+    }
+    .question-card.active {
+      opacity: 1; transform: translateX(0); pointer-events: auto;
+      position: relative; z-index: 1; box-shadow: var(--shadow-lg);
+    }
+    .question-card.exit-left { opacity: 0; transform: translateX(-40px); }
+
+    .q-num {
+      font-size: 13px; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+    }
+    .q-text {
+      font-size: 19px; font-weight: 700; line-height: 1.55; margin: 0 0 24px;
+      color: var(--text);
+    }
+
+    /* ── 选项 ── */
+    .options { display: flex; flex-direction: column; gap: 10px; }
+    .option {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: #fafbfc;
+      cursor: pointer; transition: all 0.2s;
+      user-select: none;
+    }
+    .option:hover { background: #f1f5f9; border-color: #cbd5e1; }
+    .option.selected {
+      background: var(--accent-light); border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+    }
+    .option-radio {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2px solid #cbd5e1; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .option.selected .option-radio {
+      border-color: var(--accent); background: var(--accent);
+    }
+    .option.selected .option-radio::after {
+      content: ''; width: 7px; height: 7px; background: #fff; border-radius: 50%;
+    }
+    .option-text { font-size: 15px; line-height: 1.4; }
+    .option-label {
+      font-size: 11px; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .option.selected .option-label { color: var(--accent-dark); }
+    input[type="radio"] { display: none; }
+
+    /* ── 底部控制 ── */
+    .controls {
+      display: flex; gap: 12px; align-items: center;
+    }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 13px 20px; font-size: 15px; font-weight: 600;
+      border: none; border-radius: 10px; cursor: pointer;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-outline {
+      background: var(--card); color: var(--text-muted);
+      border: 1.5px solid var(--border);
+    }
+    .btn-outline:hover:not(:disabled) { border-color: #94a3b8; color: var(--text); }
+    .btn-outline:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-primary {
+      background: var(--accent); color: #fff; flex: 1;
+      box-shadow: 0 2px 8px rgba(99,102,241,0.25);
+    }
+    .btn-primary:hover { background: var(--accent-dark); }
+    .key-hint {
+      font-size: 12px; color: var(--text-muted); margin-left: auto;
+    }
+    .key-hint kbd {
+      display: inline-block; padding: 2px 7px; font-size: 11px;
+      background: #f1f5f9; border: 1px solid var(--border);
+      border-radius: 4px; font-family: inherit;
+    }
+
+    /* ── 提交区域 ── */
+    #submitArea {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+      padding: 28px; display: none; flex-direction: column; gap: 16px;
+      animation: fadeInUp 0.4s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0);   }
+    }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-group label { font-weight: 700; font-size: 15px; }
+    .input-group input {
+      padding: 13px 16px; font-size: 16px; border: 1.5px solid var(--border);
+      border-radius: 10px; outline: none; transition: border 0.2s;
+    }
+    .input-group input:focus { border-color: var(--accent); }
+
+    /* ── 结果卡片 ── */
+    #result {
+      background: var(--green-bg); border: 1px solid var(--green-border);
+      border-radius: var(--radius); padding: 32px; text-align: center;
+      display: none; animation: fadeInUp 0.5s ease;
+    }
+    #result h2 { color: var(--green-text); font-size: 22px; margin: 0 0 8px; }
+    #result .type-badge {
+      display: inline-block; font-size: 36px; font-weight: 900;
+      letter-spacing: 4px; color: var(--accent-dark);
+      background: var(--accent-light); padding: 8px 24px;
+      border-radius: 12px; margin: 12px 0;
+    }
+    #result p { color: var(--text-muted); margin: 8px 0; }
+    #result a { color: var(--accent); font-weight: 600; }
+
+    /* ── 响应式 ── */
+    @media (max-width: 480px) {
+      .header h1 { font-size: 22px; }
+      .q-text { font-size: 17px; }
+      .question-card { padding: 20px; }
+      .option { padding: 12px 14px; }
+      .controls { flex-wrap: wrap; }
+      .key-hint { display: none; }
+    }
   </style>
 </head>
 <body>
 
-  <div class="header-container">
-    <h1>🧠 MBTI 深度测试</h1>
-    <a href="/query.html" class="nav-btn">🔍 查询历史结果</a>
+<div class="app">
+  <!-- ── 头部 ── -->
+  <div class="header">
+    <div>
+      <h1>MBTI 性格测试</h1>
+      <div class="header-subtitle">了解自己，发现优势</div>
+    </div>
+    <a href="/query.html" class="query-link">🔍 查询结果</a>
   </div>
-  <p style="color: #6b7280; margin-top: 0;">本测试共 32 题，请根据你的真实偏好选择。</p>
 
-  <div class="progress-container">
-    <div class="progress-bar" id="progressBar"></div>
+  <!-- ── 进度条 ── -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="dimension-tags" id="dimTags">
+      <span class="dim-tag">E/I</span>
+      <span class="dim-tag">S/N</span>
+      <span class="dim-tag">T/F</span>
+      <span class="dim-tag">J/P</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressBar"></div>
+    </div>
+    <div class="progress-info" id="progressInfo">
+      <span id="progressLabel">第 1 / 32 题</span>
+      <span id="progressPercent">0%</span>
+    </div>
   </div>
-  <div class="progress-text" id="progressText">第 1 / 32 题</div>
 
   <form id="testForm">
-    <div id="questions"></div>
+    <!-- ── 题目展示区 ── -->
+    <div class="card-stage" id="questions"></div>
 
-    <div class="control-btns" id="controlBtns">
-      <button type="button" class="btn-secondary" id="prevBtn" onclick="changeQuestion(-1)" disabled>上一题</button>
-      <button type="button" class="btn-primary" id="nextBtn" onclick="changeQuestion(1)">下一题</button>
+    <!-- ── 控制按钮 ── -->
+    <div class="controls" id="controlBtns">
+      <button type="button" class="btn btn-outline" id="prevBtn" onclick="goPrev()" disabled>← 上一题</button>
+      <button type="button" class="btn btn-primary" id="nextBtn" onclick="goNext()">下一题 →</button>
+      <span class="key-hint">按 <kbd>←</kbd><kbd>→</kbd> 切换</span>
     </div>
 
+    <!-- ── 提交区域 ── -->
     <div id="submitArea">
-      <label style="font-weight: bold; font-size: 16px;">填写你的昵称（用于保存和查询结果）：</label>
-      <input type="text" id="nameInput" placeholder="输入昵称">
-      <button type="submit" class="btn-primary" style="width: 100%;">提交测试结果</button>
+      <div class="input-group">
+        <label>填写昵称（用于保存和查询结果）</label>
+        <input type="text" id="nameInput" placeholder="输入你的昵称" autocomplete="off">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%">提交测试</button>
     </div>
   </form>
 
+  <!-- ── 结果区域 ── -->
   <div id="result">
-    <h2>你的 MBTI 类型：<span id="mbtiType"></span></h2>
-    <p>结果已保存，可随时前往 <a href="/query.html" style="color: #4f46e5; font-weight: bold;">查询页面</a> 查看。</p>
+    <h2>🎉 测试完成！</h2>
+    <div class="type-badge" id="mbtiType"></div>
+    <p>结果已保存，随时可前往 <a href="/query.html">查询页面</a> 查看详情。</p>
   </div>
+</div>
 
-  <script>
-    // ---------- 32 道题目库 ----------
-    const questions = [
-      // E/I 维度 (8题)
-      { text: "参加聚会时，你通常", a:"与很多人交谈，感到精力充沛", b:"更喜欢和少数熟人深入交流", dim:"EI" },
-      { text: "思考重要问题时，你喜欢", a:"找人讨论，边说边理清思路", b:"独自安静思考", dim:"EI" },
-      { text: "在社交场合中，你更偏向", a:"主动结识新朋友", b:"等待别人来与你交流", dim:"EI" },
-      { text: "经过一整天的忙碌，你更愿意", a:"与朋友一起放松", b:"独自享受安静时光", dim:"EI" },
-      { text: "当你遇到压力时，通常", a:"找人倾诉，寻求支持", b:"独自消化，处理情绪", dim:"EI" },
-      { text: "你更喜欢的工作环境是", a:"开放、互动频繁的", b:"安静、独立完成任务的", dim:"EI" },
-      { text: "在团队中，你通常", a:"主动表达观点，引导讨论", b:"仔细倾听，深思后发言", dim:"EI" },
-      { text: "形容你自己，更贴近的是", a:"对外部世界的人和事感兴趣", b:"对内心的想法和感受感兴趣", dim:"EI" },
+<script>
+  // —— 32 题：维度交错排列 + 反向计分（rev），消除惯性作答 ——
+  // 每 4 题覆盖 E/I·S/N·T/F·J/P 各一题；各维度 4 正向 + 4 反向
+  // rev:true → A 选项描述的是该维度的"另一端"，计分时自动取反
+  const questions = [
+    /* 第 1 轮 — 前半正向建立基线，后半反向 */
+    { text: "周末晚上接到朋友聚会邀请，", a: "欣然前往，期待认识新面孔", b: "有些犹豫，更想安静地待着", dim: "EI" },
+    { text: "阅读一份行业报告时，你更关注", a: "数据是否详实、案例是否可靠", b: "趋势判断是否新颖、有启发性", dim: "SN" },
+    { text: "同事因失误被当众批评后情绪低落，你首先", a: "和ta一起复盘，找出具体的改进点", b: "先安抚ta的情绪，让ta感到被理解", dim: "TF" },
+    { text: "距离重要项目截止还有两周，你通常", a: "制定详细时间表，严格按节点推进", b: "充分收集信息，在推进中逐步明确", dim: "JP" },
 
-      // S/N 维度 (8题)
-      { text: "你更关注", a:"具体的细节和事实", b:"整体的模式和可能性", dim:"SN" },
-      { text: "学习新事物时，你更喜欢", a:"按部就班，注重实际操作", b:"探索理论，理解背后的概念", dim:"SN" },
-      { text: "描述一样东西，你更倾向于", a:"描述它实际的样子和功能", b:"描述它给你的联想和意义", dim:"SN" },
-      { text: "做决定时，你更看重", a:"以往的经验和现实条件", b:"未来的可能性和灵感", dim:"SN" },
-      { text: "读一本小说，你会更关注", a:"故事情节和具体细节", b:"作品的主题和象征意义", dim:"SN" },
-      { text: "你更容易被哪种创新吸引", a:"改进现有产品使其更实用", b:"完全颠覆性的新概念", dim:"SN" },
-      { text: "旅行时，你更享受", a:"参观热门景点，体验当地生活", b:"探索未知小巷，感受独特氛围", dim:"SN" },
-      { text: "你更信任", a:"自己的亲身经历和观察", b:"自己的直觉和预感", dim:"SN" },
+    { text: "在热闹聚会上待了两小时后，你感到", a: "精力消耗殆尽，渴望回到安静空间", b: "仍然兴致高昂，想继续和人交流", dim: "EI", rev: true },
+    { text: "朋友向你描述他的创业点子，你最自然的反应是", a: "追问背后的逻辑和更大的想象空间", b: "问他打算第一步具体怎么做", dim: "SN", rev: true },
+    { text: "做团队绩效评估时，你最看重的是", a: "这个人的努力程度和进步幅度", b: "这个人的产出质量和可量化效率", dim: "TF", rev: true },
+    { text: "意外收到一笔奖金，你的处理方式是", a: "先放着，看看有没有特别想买的东西", b: "按比例分配：储蓄、投资和适度消费", dim: "JP", rev: true },
 
-      // T/F 维度 (8题)
-      { text: "做重要决定时，你更重视", a:"逻辑分析和客观标准", b:"个人价值观和人际关系", dim:"TF" },
-      { text: "朋友向你倾诉烦恼，你倾向于", a:"给出理性建议和解决方案", b:"给予情感共鸣和支持", dim:"TF" },
-      { text: "你认为公正和同情，哪个更重要？", a:"公正优先", b:"同情优先", dim:"TF" },
-      { text: "被批评时，你首先会想", a:"对方的批评是否有道理", b:"对方是否对你有成见", dim:"TF" },
-      { text: "在团队中产生分歧时，你更看重", a:"按照规则和效率解决", b:"照顾大家的情绪，维护和谐", dim:"TF" },
-      { text: "你认为一个好领导应该是", a:"理性、果断、一视同仁", b:"善解人意、善于激励", dim:"TF" },
-      { text: "你更欣赏哪种品质", a:"头脑冷静，善于分析", b:"温柔体贴，善于关怀", dim:"TF" },
-      { text: "写一封邮件，你更注重", a:"措辞准确、逻辑清晰", b:"语气友善、感受周到", dim:"TF" },
+    /* 第 2 轮 */
+    { text: "头脑中冒出一个新想法时，你的第一反应是", a: "找人讨论，在交流中把它想清楚", b: "先独自思考，形成完整想法之后再说", dim: "EI" },
+    { text: "公司要推出一款新产品，你更希望参与", a: "在现有产品基础上做扎实的迭代优化", b: "探索一个完全不同于现有方向的新品类", dim: "SN" },
+    { text: "朋友向你倾诉一段失败的亲密关系，你倾向于", a: "帮ta理性分析这段关系中双方的互动模式", b: "陪在ta身边，让ta感觉到有人在乎", dim: "TF" },
+    { text: "面对多任务并行的一天，你更习惯", a: "列出优先级清单，完成一项划掉一项", b: "哪项任务最有灵感就先做哪项", dim: "JP" },
 
-      // J/P 维度 (8题)
-      { text: "在日常生活中，你喜欢", a:"制定计划，并尽量按计划行事", b:"灵活应变，享受即兴安排", dim:"JP" },
-      { text: "面对截止日期，你通常", a:"尽早开始，稳步推进", b:"在最后关头集中冲刺", dim:"JP" },
-      { text: "你的桌面或工作空间更偏向", a:"整齐、有条理", b:"随性、看似凌乱但你知道东西在哪", dim:"JP" },
-      { text: "外出旅行，你更倾向于", a:"提前规划好行程和住宿", b:"只定个大概方向，边走边看", dim:"JP" },
-      { text: "做完一个决定后，你通常会", a:"感到轻松，事情敲定了", b:"仍然保持开放，或许还有其他选择", dim:"JP" },
-      { text: "你更喜欢哪种工作方式", a:"有明确的规则和步骤", b:"自由发挥，探索多种可能", dim:"JP" },
-      { text: "购物时，你更偏向", a:"直奔目标商品，买完就走", b:"喜欢逛，看看有什么新发现", dim:"JP" },
-      { text: "你如何看待日程安排", a:"它是保证效率的工具", b:"它常常限制了我的自由", dim:"JP" }
-    ];
+    { text: "在一个全是陌生人的社交场合中，你通常", a: "先观察环境，等别人来主动搭话", b: "主动与人攀谈，快速融入氛围", dim: "EI", rev: true },
+    { text: "回忆起印象深刻的旅行，你首先想起的是", a: "当时弥漫的那种难以言喻的独特气氛", b: "具体去了哪些地方、吃了什么东西", dim: "SN", rev: true },
+    { text: "一个决策逻辑正确但会伤害少数人感情——你的态度是", a: "暂缓执行，先寻找更柔和的替代方案", b: "坚持执行，事后再做安抚和解释", dim: "TF" },
+    { text: "你周末打扫房间的方式更接近", a: "碰到哪里觉得该收拾了就动手，比较随性", b: "分区规划，按顺序逐一彻底清理", dim: "JP", rev: true },
 
-    let currentIdx = 0; // 当前题目索引
+    /* 第 3 轮 */
+    { text: "团队会议陷入僵局、没人说话时，你倾向于", a: "打破沉默，提出一个新的讨论方向", b: "耐心等待，让更合适的发言时机自然出现", dim: "EI" },
+    { text: "向新同事介绍团队工作流程，你会", a: "用具体的操作步骤和实际案例来说明", b: "先解释整套流程背后的设计理念和原则", dim: "SN" },
+    { text: "朋友请求你做一件会影响你自身利益的事，你会", a: "先客观评估这件事合不合理，再做决定", b: "考虑到交情，能帮就尽量帮", dim: "TF" },
+    { text: "安排一次全家出行，你的风格是", a: "提前定好路线、住宿和每日大致行程", b: "确定大致方向，细节到了之后再说", dim: "JP" },
 
-    // 渲染题目
-    const qDiv = document.getElementById('questions');
-    questions.forEach((q, idx) => {
-      qDiv.innerHTML += `
-        <div class="question ${idx === 0 ? 'active' : ''}" id="qBlock${idx}">
-          <p>${idx + 1}. ${q.text}</p>
-          <div class="options">
-            <label onclick="selectOption(this, ${idx})"><input type="radio" name="q${idx}" value="2" required> 很像A：${q.a}</label>
-            <label onclick="selectOption(this, ${idx})"><input type="radio" name="q${idx}" value="1"> 比较像A</label>
-            <label onclick="selectOption(this, ${idx})"><input type="radio" name="q${idx}" value="0"> 中立</label>
-            <label onclick="selectOption(this, ${idx})"><input type="radio" name="q${idx}" value="-1"> 比较像B</label>
-            <label onclick="selectOption(this, ${idx})"><input type="radio" name="q${idx}" value="-2"> 很像B：${q.b}</label>
-          </div>
+    { text: "独自度过一整天后，你通常会", a: "感到放松自在，精力得到充分恢复", b: "觉得少了点什么，想找人互动一下", dim: "EI", rev: true },
+    { text: "评估候选人是否适合某个岗位时，你更依赖", a: "面试中感受到的潜力、可塑性和文化契合度", b: "简历上展示的具体经验、技能和过往业绩", dim: "SN", rev: true },
+    { text: "与做事风格截然不同的同事产生摩擦，你首先会", a: "尝试理解对方的感受和出发点", b: "明确职责边界，用规则来减少未来的摩擦", dim: "TF", rev: true },
+    { text: "你的手机相册更接近哪种状态", a: "照片积攒了很多，很久才会整理一次", b: "定期整理分类，始终保持有条理", dim: "JP", rev: true },
+
+    /* 第 4 轮 */
+    { text: "需要说服同事支持你的方案，你的策略是", a: "组织一场面对面会议，当面阐述你的想法", b: "写一份详尽文档，让他自己阅读思考", dim: "EI" },
+    { text: "学习一门复杂的新技能（如编程或乐器），你认为最重要的是", a: "扎实地练好每一个基础动作", b: "理解整体框架，再逐步填充细节", dim: "SN" },
+    { text: "面对一个裁员才能扭亏的业务决策，你更纠结的是", a: "怎样裁才对公司长期发展最有利", b: "怎样最小化对被裁员工的实际影响", dim: "TF" },
+    { text: "早晨起床，想到今天要做的事，你更倾向于", a: "按昨晚列好的计划开始行动", b: "根据今天的状态和心情灵活安排", dim: "JP" },
+
+    { text: "如果连续安排了多个周末社交活动，你会", a: "感到疲惫，需要留出一些空白周末", b: "觉得充实，期待每一次相聚", dim: "EI", rev: true },
+    { text: "导师说「这个方向很有前景」，你首先想知道", a: "它可能带来怎样的模式创新和行业变革", b: "有没有具体的成功案例和数据支撑", dim: "SN", rev: true },
+    { text: "有人按时完成但品质平平，有人延期但品质出色——你更欣赏", a: "后者，追求卓越值得等待", b: "前者，守信和可靠是基本素养", dim: "TF", rev: true },
+    { text: "外出用餐选择餐厅时，你通常是", a: "边走边看，凭感觉临时决定", b: "提前查好评价和菜单再决定", dim: "JP", rev: true }
+  ];
+
+  const TOTAL = questions.length;
+  let currentIdx = 0;
+  const API_BASE = window.location.origin;
+
+  // 维度名称映射
+  const dimNames = { EI: "E/I 外向·内向", SN: "S/N 实感·直觉", TF: "T/F 思考·情感", JP: "J/P 判断·感知" };
+
+  // ── 渲染题目 ──
+  const qDiv = document.getElementById('questions');
+
+  questions.forEach((q, idx) => {
+    const div = document.createElement('div');
+    div.className = `question-card${idx === 0 ? ' active' : ''}`;
+    div.id = `qBlock${idx}`;
+    div.innerHTML = `
+      <div class="q-num">问题 ${idx + 1} · ${dimNames[q.dim]}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="options">
+        <div class="option" data-value="2" onclick="selectOption(this, ${idx})">
+          <span class="option-radio"></span>
+          <span class="option-text"><span class="option-label">A</span> ${q.a}</span>
         </div>
-      `;
+        <div class="option" data-value="1" onclick="selectOption(this, ${idx})">
+          <span class="option-radio"></span>
+          <span class="option-text"><span class="option-label">偏 A</span></span>
+        </div>
+        <div class="option" data-value="0" onclick="selectOption(this, ${idx})">
+          <span class="option-radio"></span>
+          <span class="option-text"><span class="option-label">中立</span></span>
+        </div>
+        <div class="option" data-value="-1" onclick="selectOption(this, ${idx})">
+          <span class="option-radio"></span>
+          <span class="option-text"><span class="option-label">偏 B</span></span>
+        </div>
+        <div class="option" data-value="-2" onclick="selectOption(this, ${idx})">
+          <span class="option-radio"></span>
+          <span class="option-text"><span class="option-label">B</span> ${q.b}</span>
+        </div>
+      </div>
+    `;
+    qDiv.appendChild(div);
+  });
+
+  // 隐藏的 radio 用于存储选中值
+  const hiddenRadios = {};
+  questions.forEach((_, idx) => {
+    const radio = document.createElement('input');
+    radio.type = 'radio'; radio.name = `q${idx}`; radio.style.display = 'none';
+    hiddenRadios[idx] = radio;
+    qDiv.appendChild(radio);
+  });
+
+  // ── 选项点击 ──
+  function selectOption(el, idx) {
+    const parent = el.parentElement;
+    parent.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+
+    // 同步隐藏 radio
+    hiddenRadios[idx].value = el.dataset.value;
+    hiddenRadios[idx].checked = true;
+
+    // 非最后一题自动前进
+    if (idx === TOTAL - 1) {
+      setTimeout(() => {
+        document.getElementById('controlBtns').style.display = 'none';
+        document.getElementById('questions').style.display = 'none';
+        document.getElementById('submitArea').style.display = 'flex';
+        updateProgress(TOTAL);
+        updateDimTags(TOTAL);
+        // 滚动到提交区
+        document.getElementById('submitArea').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 350);
+      return;
+    }
+
+    if (idx === currentIdx && currentIdx < TOTAL - 1) {
+      setTimeout(() => goNext(), 350);
+    }
+  }
+
+  // ── 切换题目 ──
+  function goNext() {
+    if (currentIdx >= TOTAL) return;
+    const val = hiddenRadios[currentIdx].value;
+    if (!val && val !== '0') {
+      // 检查是否有选中
+      const selected = document.querySelector(`#qBlock${currentIdx} .option.selected`);
+      if (!selected) { shakeCard(currentIdx); return; }
+    }
+    if (currentIdx === TOTAL - 1) return;
+    transitionTo(currentIdx + 1);
+  }
+
+  function goPrev() {
+    if (currentIdx <= 0) return;
+    transitionTo(currentIdx - 1, true);
+  }
+
+  function transitionTo(target, reverse) {
+    const oldCard = document.getElementById(`qBlock${currentIdx}`);
+    const newCard = document.getElementById(`qBlock${target}`);
+
+    const oldClass = reverse ? 'exit-right' : 'exit-left';
+    // Remove active from old
+    oldCard.style.opacity = '0';
+    oldCard.style.transform = reverse ? 'translateX(40px)' : 'translateX(-40px)';
+    oldCard.style.pointerEvents = 'none';
+    oldCard.classList.remove('active');
+
+    // Add active to new
+    newCard.classList.add('active');
+    newCard.style.opacity = '1';
+    newCard.style.transform = 'translateX(0)';
+    newCard.style.pointerEvents = 'auto';
+
+    currentIdx = target;
+    updateUI();
+  }
+
+  function shakeCard(idx) {
+    const card = document.getElementById(`qBlock${idx}`);
+    card.style.animation = 'none';
+    card.offsetHeight; // reflow
+    card.style.animation = 'shake 0.4s ease';
+  }
+
+  function updateUI() {
+    document.getElementById('prevBtn').disabled = (currentIdx === 0);
+    updateProgress(currentIdx);
+    updateDimTags(currentIdx);
+  }
+
+  // ── 进度 ──
+  function updateProgress(index) {
+    const pct = Math.round((index / TOTAL) * 100);
+    document.getElementById('progressBar').style.width = `${pct}%`;
+    document.getElementById('progressPercent').textContent = `${pct}%`;
+    if (index < TOTAL) {
+      document.getElementById('progressLabel').textContent = `第 ${index + 1} / ${TOTAL} 题`;
+    } else {
+      document.getElementById('progressLabel').textContent = `全部完成 ✓`;
+    }
+  }
+
+  // ── 维度标签 ──
+  function updateDimTags(index) {
+    const tags = document.querySelectorAll('.dim-tag');
+    const dimOrder = ['EI','SN','TF','JP'];
+    // 确定当前维度
+    let currentDim = null;
+    if (index < TOTAL) currentDim = questions[index].dim;
+
+    // 统计已完成各维度题数
+    const doneCount = { EI:0, SN:0, TF:0, JP:0 };
+    for (let i = 0; i < index; i++) doneCount[questions[i].dim]++;
+
+    tags.forEach((tag, i) => {
+      const d = dimOrder[i];
+      tag.textContent = `${dimNames[d]} (${doneCount[d]}/8)`;
+      tag.classList.remove('current', 'done');
+      if (d === currentDim) tag.classList.add('current');
+      else if (doneCount[d] > 0) tag.classList.add('done');
+    });
+  }
+
+  // ── 键盘快捷键 ──
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault(); goNext();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault(); goPrev();
+    }
+  });
+
+  // ── 初始更新 ──
+  updateUI();
+
+  // ── 摇动动画注入 ──
+  const shakeStyle = document.createElement('style');
+  shakeStyle.textContent = `
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%     { transform: translateX(-8px); }
+      40%     { transform: translateX(8px); }
+      60%     { transform: translateX(-5px); }
+      80%     { transform: translateX(5px); }
+    }
+  `;
+  document.head.appendChild(shakeStyle);
+
+  // ── 表单提交 ──
+  document.getElementById('testForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('nameInput').value.trim();
+    if (!name) return alert('请输入昵称');
+
+    const scores = { EI: 0, SN: 0, TF: 0, JP: 0 };
+    const answers = [];
+    questions.forEach((q, idx) => {
+      const val = hiddenRadios[idx].value;
+      const num = (val !== undefined && val !== '') ? parseInt(val) : 0;
+      answers.push(num);
+      scores[q.dim] += q.rev ? -num : num;
     });
 
-    // 选项点击高亮逻辑
-    function selectOption(labelEl, idx) {
-      // 防止 label 标签双击事件穿透
-      if (window.event && window.event.target.tagName === 'INPUT') return;
+    let type = '';
+    type += scores.EI >= 0 ? 'E' : 'I';
+    type += scores.SN >= 0 ? 'S' : 'N';
+    type += scores.TF >= 0 ? 'T' : 'F';
+    type += scores.JP >= 0 ? 'J' : 'P';
 
-      // 清除当前题目的其他高亮
-      const labels = labelEl.parentElement.querySelectorAll('label');
-      labels.forEach(l => l.classList.remove('selected'));
-      // 为当前点击的高亮
-      labelEl.classList.add('selected');
-
-      // 手动勾选对应的单选框（防止阻止事件后原生不勾选）
-      const radio = labelEl.querySelector('input[type="radio"]');
-      if (radio) radio.checked = true;
-
-      // 如果是最后一题
-      if (idx === questions.length - 1) {
-        setTimeout(() => {
-          document.getElementById('controlBtns').style.display = 'none';
-          document.getElementById('submitArea').style.display = 'block';
-          
-          // 隐藏掉最后一题的题目内容，腾出空间展示提交区
-          document.getElementById(`qBlock${idx}`).classList.remove('active');
-          
-          updateProgress(questions.length); // 进度条拉满
-        }, 300);
-        return; 
-      }
-      
-      // 如果不是最后一题，300ms 后自动切到下一题
-      setTimeout(() => { 
-        if (currentIdx === idx && currentIdx < questions.length - 1) {
-          changeQuestion(1); 
-        } 
-      }, 300);
-    }
-
-    // 切换题目核心逻辑
-    function changeQuestion(step) {
-      // 验证当前题目是否已做（只有往后走时需要验证）
-      if (step === 1) {
-        const checked = document.querySelector(`input[name="q${currentIdx}"]:checked`);
-        if (!checked) {
-          alert('请先选择一个选项再进行下一题');
-          return;
-        }
-      }
-
-      // 隐藏当前题
-      document.getElementById(`qBlock${currentIdx}`).classList.remove('active');
-
-      // 计算新题目的索引
-      currentIdx += step;
-
-      // 显示新一题
-      document.getElementById(`qBlock${currentIdx}`).classList.add('active');
-
-      // 更新控制按钮状态
-      document.getElementById('prevBtn').disabled = (currentIdx === 0);
-      
-      // 更新进度条
-      updateProgress(currentIdx);
-    }
-
-    // 更新进度条和文本提示
-    function updateProgress(index) {
-      const percent = (index / questions.length) * 100;
-      document.getElementById('progressBar').style.width = `${percent}%`;
-      if (index < questions.length) {
-        document.getElementById('progressText').textContent = `第 ${index + 1} / ${questions.length} 题`;
-      } else {
-        document.getElementById('progressText').textContent = `题目已全部完成！`;
-      }
-    }
-
-    // 初始化进度条
-    updateProgress(0);
-
-    // 提交逻辑
-    document.getElementById('testForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('nameInput').value.trim();
-      if (!name) return alert('请输入昵称');
-
-      // 收集答案并计分
-      const scores = { EI: 0, SN: 0, TF: 0, JP: 0 };
-      const answers = [];
-      questions.forEach((q, idx) => {
-        const selected = document.querySelector(`input[name="q${idx}"]:checked`);
-        const val = selected ? parseInt(selected.value) : 0;
-        answers.push(val);
-        scores[q.dim] += val;
+    try {
+      const res = await fetch(`${API_BASE}/api/collections/results/records`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, mbti_type: type, answers, scores })
       });
+      if (!res.ok) throw new Error('保存失败');
 
-      // 确定类型
-      let type = '';
-      type += scores.EI >= 0 ? 'E' : 'I';
-      type += scores.SN >= 0 ? 'S' : 'N';
-      type += scores.TF >= 0 ? 'T' : 'F';
-      type += scores.JP >= 0 ? 'J' : 'P';
-
-      // 保存到 PocketBase
-      try {
-        const res = await fetch('http://127.0.0.1:8090/api/collections/results/records', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, mbti_type: type, answers, scores })
-        });
-        if (!res.ok) throw new Error('保存失败');
-        
-        document.getElementById('mbtiType').textContent = type;
-        document.getElementById('result').style.display = 'block';
-        document.getElementById('testForm').style.display = 'none';
-        document.querySelector('.progress-container').style.display = 'none';
-        document.getElementById('progressText').style.display = 'none';
-      } catch (err) {
-        alert('提交失败，请检查网络连接');
-      }
-    });
-  </script>
+      document.getElementById('mbtiType').textContent = type;
+      document.getElementById('result').style.display = 'block';
+      document.getElementById('testForm').style.display = 'none';
+      document.getElementById('progressWrap').style.display = 'none';
+    } catch (err) {
+      alert('提交失败，请检查网络连接');
+    }
+  });
+</script>
 </body>
 </html>

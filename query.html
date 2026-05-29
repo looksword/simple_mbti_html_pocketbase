@@ -3,513 +3,162 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MBTI 测试结果查询</title>
-
+  <title>MBTI 结果查询 · 量化分析</title>
   <style>
-    :root{
-      --primary:#6366f1;
-      --primary-dark:#4f46e5;
-      --cyan:#06b6d4;
+    :root {
+      --primary: #6366f1; --primary-dark: #4f46e5; --cyan: #06b6d4;
+      --bg: #f3f4f6; --card: #ffffff; --text: #111827; --sub: #6b7280;
+      --border: #e5e7eb; --danger: #dc2626;
+      --shadow: 0 10px 25px rgba(0,0,0,.06), 0 4px 10px rgba(0,0,0,.03);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(circle at top left, #eef2ff 0%, transparent 30%),
+                  radial-gradient(circle at top right, #ecfeff 0%, transparent 30%), var(--bg);
+      color: var(--text); min-height: 100vh; padding: 40px 16px;
+    }
+    .container { max-width: 720px; margin: auto; }
 
-      --bg:#f3f4f6;
-      --card:#ffffff;
+    /* Hero */
+    .hero { text-align: center; margin-bottom: 32px; }
+    .hero h1 { font-size: 38px; font-weight: 900; margin-bottom: 12px; letter-spacing: -1px; }
+    .hero p { color: var(--sub); line-height: 1.8; font-size: 15px; }
 
-      --text:#111827;
-      --sub:#6b7280;
+    /* Search */
+    .search-panel { background: var(--card); border-radius: 24px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
+    .search-box { display: flex; gap: 12px; }
+    .search-input { flex: 1; height: 54px; border: 1px solid var(--border); border-radius: 14px; padding: 0 18px; font-size: 16px; outline: none; transition: .25s; background: #fff; }
+    .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99,102,241,.12); }
+    .search-btn { border: none; height: 54px; padding: 0 28px; border-radius: 14px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; font-size: 15px; font-weight: 700; cursor: pointer; transition: .25s; }
+    .search-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 18px rgba(99,102,241,.25); }
+    .search-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    .loading { display: none; align-items: center; justify-content: center; gap: 12px; margin-top: 20px; color: var(--sub); font-size: 14px; }
+    .spinner { width: 20px; height: 20px; border: 3px solid #ddd; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { display: none; margin-top: 16px; padding: 14px 16px; background: #fef2f2; border: 1px solid #fecaca; color: var(--danger); border-radius: 14px; font-size: 14px; line-height: 1.6; }
+    .empty { display: none; text-align: center; background: var(--card); border-radius: 24px; padding: 48px 24px; box-shadow: var(--shadow); margin-top: 24px; }
+    .empty .icon { font-size: 50px; margin-bottom: 14px; }
+    .empty p { color: var(--sub); }
 
-      --border:#e5e7eb;
-      --danger:#dc2626;
+    /* Result Card */
+    .result-card { display: none; background: var(--card); border-radius: 28px; padding: 32px; box-shadow: var(--shadow); margin-top: 24px; animation: fadeUp .45s ease; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .result-top { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 28px; text-align: center; }
+    .name { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    .type { font-size: 58px; font-weight: 900; letter-spacing: 4px; margin-bottom: 12px; background: linear-gradient(135deg, var(--primary), #8b5cf6); background-clip: text; -webkit-background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+    .type-desc { color: var(--sub); line-height: 1.8; margin-bottom: 14px; }
+    .time { color: #9ca3af; font-size: 14px; }
 
-      --shadow:
-        0 10px 25px rgba(0,0,0,.06),
-        0 4px 10px rgba(0,0,0,.03);
+    /* Section */
+    .section-title { font-size: 18px; font-weight: 800; margin-bottom: 22px; display: flex; align-items: center; gap: 8px; }
+
+    /* Metric Bars */
+    .metric { margin-bottom: 26px; }
+    .metric-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; font-weight: 700; }
+    .label-active { font-weight: 800; opacity: 1; }
+    .label-inactive { font-weight: 500; opacity: .5; }
+    .left-label { color: var(--primary); }
+    .right-label { color: var(--cyan); }
+    .metric-bar { position: relative; height: 16px; background: #f1f5f9; border-radius: 999px; overflow: hidden; margin-bottom: 6px; }
+    .metric-bar::before { content: ''; position: absolute; left: 50%; top: 0; width: 2px; height: 100%; background: rgba(255,255,255,.9); box-shadow: 0 0 2px rgba(0,0,0,.2); z-index: 3; }
+    .metric-fill { position: absolute; top: 0; height: 100%; transition: all .6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .metric-score { font-size: 13px; text-align: center; color: var(--sub); font-weight: 600; }
+    .metric-score strong { color: var(--text); }
+
+    /* Answer Detail Bars */
+    .answers-section { border-top: 1px solid var(--border); padding-top: 22px; margin-top: 4px; }
+    .dim-answers { margin-bottom: 18px; }
+    .dim-answers-title { font-size: 13px; font-weight: 700; color: var(--sub); margin-bottom: 8px; padding-left: 2px; }
+    .answer-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+    .answer-qnum { font-size: 12px; font-weight: 700; color: var(--sub); width: 28px; text-align: right; flex-shrink: 0; }
+    .answer-bar-wrap { flex: 1; height: 18px; background: #f1f5f9; border-radius: 4px; position: relative; overflow: hidden; }
+    .answer-bar-wrap::after { content: ''; position: absolute; left: 50%; top: 0; width: 1px; height: 100%; background: #cbd5e1; z-index: 1; }
+    .answer-bar-fill { position: absolute; top: 0; height: 100%; border-radius: 4px; transition: width .5s ease; }
+    .answer-bar-fill.pos { left: 50%; background: linear-gradient(90deg, #a5b4fc, #6366f1); }
+    .answer-bar-fill.neg { right: 50%; background: linear-gradient(270deg, #67e8f9, #06b6d4); }
+    .answer-label { font-size: 11px; font-weight: 600; width: 72px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+    .answer-label.pos { color: #4f46e5; }
+    .answer-label.neg { color: #0891b2; }
+    .answer-label.zero { color: #94a3b8; }
+    .answer-rev { font-size: 10px; color: #f59e0b; font-weight: 600; margin-left: 2px; }
+
+    /* Legend */
+    .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; font-size: 12px; color: var(--sub); }
+    .legend span { display: flex; align-items: center; gap: 4px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+    /* Footer */
+    .footer { text-align: center; margin-top: 24px; }
+    .footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
+    .footer a:hover { text-decoration: underline; }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      body { padding: 24px 14px; }
+      .hero h1 { font-size: 30px; }
+      .search-box { flex-direction: column; }
+      .search-btn { width: 100%; }
+      .result-card { padding: 24px; }
+      .type { font-size: 42px; }
+      .answer-label { width: 56px; font-size: 10px; }
     }
 
-    *{
-      margin:0;
-      padding:0;
-      box-sizing:border-box;
-    }
-
-    body{
-      font-family:
-        Inter,
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "PingFang SC",
-        "Microsoft YaHei",
-        sans-serif;
-
-      background:
-        radial-gradient(circle at top left,#eef2ff 0%,transparent 30%),
-        radial-gradient(circle at top right,#ecfeff 0%,transparent 30%),
-        var(--bg);
-
-      color:var(--text);
-      min-height:100vh;
-      padding:40px 16px;
-    }
-
-    .container{
-      max-width:720px;
-      margin:auto;
-    }
-
-    .hero{
-      text-align:center;
-      margin-bottom:32px;
-    }
-
-    .hero h1{
-      font-size:38px;
-      font-weight:900;
-      margin-bottom:12px;
-      letter-spacing:-1px;
-    }
-
-    .hero p{
-      color:var(--sub);
-      line-height:1.8;
-      font-size:15px;
-    }
-
-    .search-panel{
-      background:var(--card);
-      border-radius:24px;
-      padding:24px;
-      box-shadow:var(--shadow);
-      margin-bottom:20px;
-    }
-
-    .search-box{
-      display:flex;
-      gap:12px;
-    }
-
-    .search-input{
-      flex:1;
-      height:54px;
-
-      border:1px solid var(--border);
-      border-radius:14px;
-
-      padding:0 18px;
-
-      font-size:16px;
-      outline:none;
-
-      transition:.25s;
-      background:#fff;
-    }
-
-    .search-input:focus{
-      border-color:var(--primary);
-      box-shadow:0 0 0 4px rgba(99,102,241,.12);
-    }
-
-    .search-btn{
-      border:none;
-
-      height:54px;
-      padding:0 28px;
-
-      border-radius:14px;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--primary),
-          var(--primary-dark)
-        );
-
-      color:white;
-      font-size:15px;
-      font-weight:700;
-
-      cursor:pointer;
-      transition:.25s;
-    }
-
-    .search-btn:hover{
-      transform:translateY(-1px);
-      box-shadow:
-        0 10px 18px rgba(99,102,241,.25);
-    }
-
-    .search-btn:disabled{
-      opacity:.6;
-      cursor:not-allowed;
-      transform:none;
-    }
-
-    .loading{
-      display:none;
-
-      align-items:center;
-      justify-content:center;
-
-      gap:12px;
-      margin-top:20px;
-
-      color:var(--sub);
-      font-size:14px;
-    }
-
-    .spinner{
-      width:20px;
-      height:20px;
-
-      border:3px solid #ddd;
-      border-top-color:var(--primary);
-
-      border-radius:50%;
-
-      animation:spin 1s linear infinite;
-    }
-
-    @keyframes spin{
-      to{
-        transform:rotate(360deg);
-      }
-    }
-
-    .error{
-      display:none;
-
-      margin-top:16px;
-
-      padding:14px 16px;
-
-      background:#fef2f2;
-      border:1px solid #fecaca;
-
-      color:var(--danger);
-
-      border-radius:14px;
-
-      font-size:14px;
-      line-height:1.6;
-    }
-
-    .empty{
-      display:none;
-
-      text-align:center;
-
-      background:var(--card);
-
-      border-radius:24px;
-      padding:48px 24px;
-
-      box-shadow:var(--shadow);
-
-      margin-top:24px;
-    }
-
-    .empty .icon{
-      font-size:50px;
-      margin-bottom:14px;
-    }
-
-    .empty p{
-      color:var(--sub);
-    }
-
-    .result-card{
-      display:none;
-
-      background:var(--card);
-
-      border-radius:28px;
-      padding:32px;
-
-      box-shadow:var(--shadow);
-
-      margin-top:24px;
-
-      animation:fadeUp .45s ease;
-    }
-
-    @keyframes fadeUp{
-      from{
-        opacity:0;
-        transform:translateY(14px);
-      }
-      to{
-        opacity:1;
-        transform:none;
-      }
-    }
-
-    .result-top{
-      border-bottom:1px solid var(--border);
-      padding-bottom:24px;
-      margin-bottom:28px;
-    }
-
-    .name{
-      font-size:18px;
-      font-weight:700;
-      margin-bottom:20px;
-    }
-
-    .type{
-      font-size:58px;
-      font-weight:900;
-      letter-spacing:4px;
-
-      margin-bottom:12px;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--primary),
-          #8b5cf6
-        );
-
-      background-clip:text; 
-      -webkit-background-clip:text; 
-      
-      color:transparent;
-      -webkit-text-fill-color:transparent;
-    }
-
-    .type-desc{
-      color:var(--sub);
-      line-height:1.8;
-      margin-bottom:18px;
-    }
-
-    .time{
-      color:#9ca3af;
-      font-size:14px;
-    }
-
-    .section-title{
-      font-size:20px;
-      font-weight:800;
-      margin-bottom:24px;
-    }
-
-    .metric{
-      margin-bottom:28px;
-    }
-
-    .metric-header{
-      display:flex;
-      justify-content:space-between;
-
-      margin-bottom:10px;
-
-      font-size:14px;
-      font-weight:700;
-    }
-
-    /* 当某一边胜出时加粗，未胜出时变淡 */
-    .label-active {
-      font-weight: 800;
-      opacity: 1;
-    }
-    .label-inactive {
-      font-weight: 500;
-      opacity: 0.5;
-    }
-
-    .left-label{
-      color:var(--primary);
-    }
-
-    .right-label{
-      color:var(--cyan);
-    }
-
-    .metric-bar{
-      position:relative;
-      height:16px; /* 稍微加粗一点点，视觉视觉效果更好 */
-      background: #f1f5f9; /* 默认浅灰色底 */
-      border-radius:999px;
-      overflow:hidden;
-    }
-
-    /* 中央分界线加深清晰度 */
-    .metric-bar::before{
-      content:'';
-      position:absolute;
-      left:50%;
-      top:0;
-      width:2px;
-      height:100%;
-      background:rgba(255, 255, 255, 0.9);
-      box-shadow: 0 0 2px rgba(0,0,0,0.2);
-      z-index:3;
-    }
-
-    .metric-fill{
-      position:absolute;
-      top:0;
-      height:100%;
-      transition:all .6s cubic-bezier(0.34, 1.56, 0.64, 1); /* 加一点生动的弹性动画 */
-    }
-
-    .footer{
-      text-align:center;
-      margin-top:24px;
-    }
-
-    .footer a{
-      color:var(--primary);
-      text-decoration:none;
-      font-weight:600;
-    }
-
-    .footer a:hover{
-      text-decoration:underline;
-    }
-
-    @media(max-width:640px){
-
-      body{
-        padding:24px 14px;
-      }
-
-      .hero h1{
-        font-size:30px;
-      }
-
-      .search-box{
-        flex-direction:column;
-      }
-
-      .search-btn{
-        width:100%;
-      }
-
-      .result-card{
-        padding:24px;
-      }
-
-      .type{
-        font-size:42px;
-      }
-    }
-
-    @media(prefers-color-scheme:dark){
-
-      :root{
-        --bg:#0f172a;
-        --card:#111827;
-        --text:#f3f4f6;
-        --sub:#94a3b8;
-        --border:#1f2937;
-      }
-
-      body{
-        background:
-          radial-gradient(circle at top left,#1e1b4b 0%,transparent 30%),
-          radial-gradient(circle at top right,#082f49 0%,transparent 30%),
-          var(--bg);
-      }
-
-      .search-input{
-        background:#0b1220;
-        color:white;
-      }
-
-      .metric-bar{
-        background:#1e293b;
-      }
-
-      .metric-bar::before{
-        background: #111827;
-      }
-
-      .error{
-        background:#2a1215;
-        border-color:#5f1d24;
-      }
+    /* Dark Mode */
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0f172a; --card: #111827; --text: #f3f4f6; --sub: #94a3b8; --border: #1f2937; }
+      body { background: radial-gradient(circle at top left, #1e1b4b 0%, transparent 30%), radial-gradient(circle at top right, #082f49 0%, transparent 30%), var(--bg); }
+      .search-input { background: #0b1220; color: white; }
+      .metric-bar { background: #1e293b; }
+      .metric-bar::before { background: #111827; }
+      .error { background: #2a1215; border-color: #5f1d24; }
+      .answer-bar-wrap { background: #1e293b; }
+      .answer-bar-wrap::after { background: #334155; }
     }
   </style>
 </head>
-
 <body>
-
   <main class="container">
-
     <section class="hero">
-      <h1>🔍 查询 MBTI 测试结果</h1>
-
-      <p>
-        输入测试时填写的昵称<br>
-        查看你的性格维度分析报告
-      </p>
+      <h1>📊 MBTI 量化分析报告</h1>
+      <p>输入测试时填写的昵称<br>查看你的性格维度详细得分</p>
     </section>
 
     <section class="search-panel">
-
       <div class="search-box">
-
-        <input
-          id="queryName"
-          class="search-input"
-          type="text"
-          placeholder="请输入昵称，例如：康康"
-        />
-
-        <button
-          id="searchBtn"
-          class="search-btn"
-        >
-          查询结果
-        </button>
-
+        <input id="queryName" class="search-input" type="text" placeholder="请输入昵称" />
+        <button id="searchBtn" class="search-btn">查询</button>
       </div>
-
-      <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <span>正在查询结果...</span>
-      </div>
-
+      <div class="loading" id="loading"><div class="spinner"></div><span>查询中...</span></div>
       <div class="error" id="errorBox"></div>
-
     </section>
 
-    <section class="empty" id="emptyBox">
-      <div class="icon">🔎</div>
-      <p>没有找到该昵称的测试记录</p>
-    </section>
+    <section class="empty" id="emptyBox"><div class="icon">🔎</div><p>没有找到该昵称的测试记录</p></section>
 
     <section class="result-card" id="resultCard">
-
       <div class="result-top">
-
-        <div class="name">
-          👤 <span id="rName"></span>
-        </div>
-
+        <div class="name">👤 <span id="rName"></span></div>
         <div class="type" id="rType"></div>
-
         <div class="type-desc" id="rDesc"></div>
-
-        <div class="time">
-          测试时间：
-          <span id="rTime"></span>
-        </div>
-
+        <div class="time">测试时间：<span id="rTime"></span></div>
       </div>
 
-      <div class="section-title">
-        📊 四大人格维度分析
-      </div>
-
+      <div class="section-title">📏 四大维度量化得分</div>
       <div id="metrics"></div>
 
+      <div class="answers-section">
+        <div class="section-title">📋 逐题答题明细</div>
+        <div class="legend">
+          <span><span class="legend-dot" style="background:linear-gradient(90deg,#a5b4fc,#6366f1)"></span> 贡献偏左（E/S/T/J）</span>
+          <span><span class="legend-dot" style="background:linear-gradient(270deg,#67e8f9,#06b6d4)"></span> 贡献偏右（I/N/F/P）</span>
+          <span><span class="legend-dot" style="background:#94a3b8"></span> 中立</span>
+          <span><span class="legend-dot" style="background:#f59e0b;border-radius:50%"></span> 反向计分题</span>
+        </div>
+        <div id="answersDetail"></div>
+      </div>
     </section>
 
-    <div class="footer">
-      <a href="/">← 返回测试首页</a>
-    </div>
-
+    <div class="footer"><a href="/">← 返回测试</a></div>
   </main>
 
   <script>
@@ -518,29 +167,36 @@
     let searching = false;
 
     const descriptions = {
-      INTJ:"战略家型人格，擅长规划与独立思考。",
-      INTP:"逻辑学家型人格，理性且富有创造力。",
-      ENTJ:"指挥官型人格，果断且领导力强。",
-      ENTP:"辩论家型人格，思维敏捷且充满好奇。",
-      INFJ:"提倡者型人格，理想主义且洞察力强。",
-      INFP:"调停者型人格，温柔且富有同理心。",
-      ENFJ:"主人公型人格，富有感染力与责任感。",
-      ENFP:"竞选者型人格，热情、自由、富有创意。",
-      ISTJ:"物流师型人格，可靠且重视秩序。",
-      ISFJ:"守卫者型人格，细致且乐于助人。",
-      ESTJ:"总经理型人格，执行力与组织力强。",
-      ESFJ:"执政官型人格，热情并关注他人。",
-      ISTP:"鉴赏家型人格，冷静且擅长实践。",
-      ISFP:"探险家型人格，感性且热爱自由。",
-      ESTP:"企业家型人格，行动力强且喜欢挑战。",
-      ESFP:"表演者型人格，活泼并享受当下。"
+      INTJ: "战略家型人格，擅长规划与独立思考。", INTP: "逻辑学家型人格，理性且富有创造力。",
+      ENTJ: "指挥官型人格，果断且领导力强。", ENTP: "辩论家型人格，思维敏捷且充满好奇。",
+      INFJ: "提倡者型人格，理想主义且洞察力强。", INFP: "调停者型人格，温柔且富有同理心。",
+      ENFJ: "主人公型人格，富有感染力与责任感。", ENFP: "竞选者型人格，热情、自由、富有创意。",
+      ISTJ: "物流师型人格，可靠且重视秩序。", ISFJ: "守卫者型人格，细致且乐于助人。",
+      ESTJ: "总经理型人格，执行力与组织力强。", ESFJ: "执政官型人格，热情并关注他人。",
+      ISTP: "鉴赏家型人格，冷静且擅长实践。", ISFP: "探险家型人格，感性且热爱自由。",
+      ESTP: "企业家型人格，行动力强且喜欢挑战。", ESFP: "表演者型人格，活泼并享受当下。"
     };
 
     const metricsConfig = [
-      { key:"EI", left:"外向 (E)", right:"内向 (I)" },
-      { key:"SN", left:"感觉 (S)", right:"直觉 (N)" },
-      { key:"TF", left:"思考 (T)", right:"情感 (F)" },
-      { key:"JP", left:"判断 (J)", right:"感知 (P)" }
+      { key: "EI", left: "外向 (E)", right: "内向 (I)" },
+      { key: "SN", left: "感觉 (S)", right: "直觉 (N)" },
+      { key: "TF", left: "思考 (T)", right: "情感 (F)" },
+      { key: "JP", left: "判断 (J)", right: "感知 (P)" }
+    ];
+
+    // 每道题的维度归属（与测试页交错顺序一致）
+    const questionDims = [
+      'EI','SN','TF','JP','EI','SN','TF','JP',
+      'EI','SN','TF','JP','EI','SN','TF','JP',
+      'EI','SN','TF','JP','EI','SN','TF','JP',
+      'EI','SN','TF','JP','EI','SN','TF','JP'
+    ];
+    // 每道题是否反向计分（与测试页 rev 标记一致）
+    const questionRevs = [
+      false, false, false, false,  true,  true,  true,  true,
+      false, false, false, false,  true,  true, false,  true,
+      false, false, false, false,  true,  true,  true,  true,
+      false, false, false, false,  true,  true,  true,  true
     ];
 
     const queryInput = document.getElementById("queryName");
@@ -550,174 +206,132 @@
     const emptyBox = document.getElementById("emptyBox");
     const resultCard = document.getElementById("resultCard");
 
-    queryInput.addEventListener("keydown", e => {
-      if(e.key === "Enter") search();
-    });
-
+    queryInput.addEventListener("keydown", e => { if (e.key === "Enter") search(); });
     searchBtn.addEventListener("click", search);
 
-    async function search(){
-      if(searching) return;
+    async function search() {
+      if (searching) return;
       const rawName = queryInput.value.trim();
       const name = sanitize(rawName);
       resetUI();
+      if (!name) { showError("请输入昵称"); return; }
+      if (cache.has(name)) { render(cache.get(name)); return; }
 
-      if(!name){
-        showError("请输入昵称");
-        return;
-      }
+      searching = true; searchBtn.disabled = true; loading.style.display = "flex";
 
-      if(cache.has(name)){
-        render(cache.get(name));
-        return;
-      }
-
-      searching = true;
-      searchBtn.disabled = true;
-      loading.style.display = "flex";
-
-      try{
+      try {
         const filter = encodeURIComponent(`name="${name}"`);
-        const url = `${API_BASE}/api/collections/results/records?filter=${filter}&sort=-created&perPage=1`;
-        const res = await fetch(url);
-
-        if(!res.ok) throw new Error("服务器错误");
-
+        const res = await fetch(`${API_BASE}/api/collections/results/records?filter=${filter}&sort=-created&perPage=1`);
+        if (!res.ok) throw new Error("服务器错误");
         const data = await res.json();
-
-        if(!data.items || data.items.length === 0){
-          emptyBox.style.display = "block";
-          return;
-        }
-
+        if (!data.items || data.items.length === 0) { emptyBox.style.display = "block"; return; }
         const record = data.items[0];
         cache.set(name, record);
         render(record);
-
-      }catch(err){
+      } catch (err) {
         console.error(err);
         showError("查询失败，请检查网络或稍后重试");
-      }finally{
-        searching = false;
-        searchBtn.disabled = false;
-        loading.style.display = "none";
+      } finally {
+        searching = false; searchBtn.disabled = false; loading.style.display = "none";
       }
     }
 
-    function render(record){
+    function render(record) {
       document.getElementById("rName").textContent = record.name || "-";
       document.getElementById("rType").textContent = record.mbti_type || "----";
-      document.getElementById("rDesc").textContent = descriptions[record.mbti_type] || "暂无人格描述";
+      document.getElementById("rDesc").textContent = descriptions[record.mbti_type] || "";
       document.getElementById("rTime").textContent = formatDate(record.created);
 
-      const scores = record.scores || { EI:0, SN:0, TF:0, JP:0 };
+      // 维度量化条
+      const scores = record.scores || { EI: 0, SN: 0, TF: 0, JP: 0 };
       const metricsEl = document.getElementById("metrics");
       metricsEl.innerHTML = "";
-
-      metricsConfig.forEach(metric => {
-        const score = scores[metric.key] || 0;
-        metricsEl.appendChild(createMetric(score, metric.left, metric.right));
+      metricsConfig.forEach(m => {
+        const score = scores[m.key] || 0;
+        metricsEl.appendChild(createMetric(score, m.key, m.left, m.right));
       });
+
+      // 答题明细：按维度分组，展示原始选择 → 实际贡献
+      const answers = record.answers || [];
+      const detailEl = document.getElementById("answersDetail");
+      detailEl.innerHTML = "";
+
+      if (answers.length > 0) {
+        const dimNames = { EI: "E/I 外向·内向", SN: "S/N 实感·直觉", TF: "T/F 思考·情感", JP: "J/P 判断·感知" };
+        const dimOrder = ['EI','SN','TF','JP'];
+
+        dimOrder.forEach(dim => {
+          const group = document.createElement("div");
+          group.className = "dim-answers";
+          group.innerHTML = `<div class="dim-answers-title">${dimNames[dim]}</div>`;
+          detailEl.appendChild(group);
+
+          answers.forEach((rawVal, i) => {
+            if (questionDims[i] !== dim) return;
+
+            const rev = questionRevs[i] || false;
+            const contrib = rev ? -(rawVal || 0) : (rawVal || 0);
+            // 归一化到 0-1: contrib∈[-2,2] → 0~1（0.5=中立）
+            const pct = 0.5 + contrib / 4; // +2→1, -2→0, 0→0.5
+            const clamped = Math.max(0.02, Math.min(0.98, pct));
+
+            const side = contrib > 0 ? 'pos' : contrib < 0 ? 'neg' : 'zero';
+            const rawLabel = rawVal >= 2 ? 'A+2' : rawVal === 1 ? 'A+1' : rawVal === 0 ? '中立' : rawVal === -1 ? 'B-1' : 'B-2';
+            const contribLabel = contrib > 0 ? `+${contrib}` : `${contrib}`;
+
+            const row = document.createElement("div");
+            row.className = "answer-row";
+            row.innerHTML = `
+              <span class="answer-qnum">#${i + 1}</span>
+              <div class="answer-bar-wrap">
+                <div class="answer-bar-fill ${side}" style="width:${Math.abs(clamped - 0.5) * 100}%"></div>
+              </div>
+              <span class="answer-label ${side}">
+                ${rawLabel}→${contribLabel}${rev ? '<span class="answer-rev">🔄</span>' : ''}
+              </span>
+            `;
+            group.appendChild(row);
+          });
+        });
+      } else {
+        detailEl.innerHTML = '<p style="color:var(--sub);">暂无答题明细数据</p>';
+      }
 
       resultCard.style.display = "block";
     }
 
-    // 创建维度条
-    function createMetric(score, leftText, rightText){
+    function createMetric(score, key, leftText, rightText) {
       const wrapper = document.createElement("div");
       wrapper.className = "metric";
-
-      // score: -16 到 +16。转换为左侧占比 (0% - 100%)
-      // 这里的逻辑：若 score = +16, 则 leftPercent = 100% (极度偏向左边)
-      // 若 score = -16, 则 leftPercent = 0% (极度偏向右边)
       const leftPercent = Math.round(((score + 16) / 32) * 100);
       const rightPercent = 100 - leftPercent;
+      const leftClass = leftPercent >= 50 ? "label-active" : "label-inactive";
+      const rightClass = rightPercent > 50 ? "label-active" : "label-inactive";
 
-      // 视觉样式提升：高亮胜出的一方，淡化未胜出的一方
-      const leftClass = leftPercent >= 50 ? 'label-active' : 'label-inactive';
-      const rightClass = rightPercent > 50 ? 'label-active' : 'label-inactive';
-
-      const fillHTML = createFill(score, leftPercent);
+      let fillHTML = "";
+      if (score > 0) {
+        const width = leftPercent - 50;
+        fillHTML = `<div class="metric-fill" style="left:${50 - width}%;width:${width}%;background:var(--primary);"></div>`;
+      } else if (score < 0) {
+        const width = 50 - leftPercent;
+        fillHTML = `<div class="metric-fill" style="left:50%;width:${width}%;background:var(--cyan);"></div>`;
+      }
 
       wrapper.innerHTML = `
         <div class="metric-header">
-          <span class="left-label ${leftClass}">
-            ${leftText} (${leftPercent}%)
-          </span>
-          <span class="right-label ${rightClass}">
-            (${rightPercent}%) ${rightText}
-          </span>
+          <span class="left-label ${leftClass}">${leftText} (${leftPercent}%)</span>
+          <span class="right-label ${rightClass}">(${rightPercent}%) ${rightText}</span>
         </div>
-        <div class="metric-bar">
-          ${fillHTML}
-        </div>
+        <div class="metric-bar">${fillHTML}</div>
+        <div class="metric-score">原始得分：<strong>${score > 0 ? '+' : ''}${score}</strong>（满分 ±16，正分偏左，负分偏右）</div>
       `;
-
       return wrapper;
     }
 
-    // 完美修正方向：中间向两边增长的进度条
-    function createFill(score, leftPercent){
-
-      // 情况 1：偏向左侧 (score > 0)，例如外向 (E) 占比大
-      // 视觉上：彩色条应该出现在左半边，从 leftPercent 一直延伸到 50% 的中心点
-      if(score > 0){
-        const width = leftPercent - 50;
-        return `
-          <div
-            class="metric-fill"
-            style="
-              left: ${50 - width}%; /* 或者直接写 leftPercent，但这里用 50-width 更直观 */
-              width: ${width}%;
-              background: var(--primary); /* 左侧专属颜色（靛蓝） */
-            "
-          ></div>
-        `;
-      }
-
-      // 情况 2：偏向右侧 (score < 0)，例如内向 (I) 占比大
-      // 视觉上：彩色条应该出现在右半边，从 50% 的中心点一直向右延伸到计算出的位置
-      if(score < 0){
-        const width = 50 - leftPercent;
-        return `
-          <div
-            class="metric-fill"
-            style="
-              left: 50%;
-              width: ${width}%;
-              background: var(--cyan); /* 右侧专属颜色（青色） */
-            "
-          ></div>
-        `;
-      }
-
-      // 情况 3：正好等于 0 (50% / 50%)，不显示任何颜色条
-      return ''; 
-    }
-
-    function sanitize(str){
-      return str.replace(/[<>]/g, "");
-    }
-
-    function showError(msg){
-      errorBox.textContent = msg;
-      errorBox.style.display = "block";
-    }
-
-    function resetUI(){
-      errorBox.style.display = "none";
-      emptyBox.style.display = "none";
-      resultCard.style.display = "none";
-    }
-
-    function formatDate(dateString){
-      try{
-        return new Date(dateString).toLocaleString("zh-CN");
-      }catch{
-        return dateString;
-      }
-    }
+    function sanitize(str) { return str.replace(/[<>]/g, ""); }
+    function showError(msg) { errorBox.textContent = msg; errorBox.style.display = "block"; }
+    function resetUI() { errorBox.style.display = "none"; emptyBox.style.display = "none"; resultCard.style.display = "none"; }
+    function formatDate(d) { try { return new Date(d).toLocaleString("zh-CN"); } catch { return d; } }
   </script>
-
 </body>
 </html>
